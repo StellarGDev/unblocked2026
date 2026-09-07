@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/png" href="favicon.png">
+
+    <title>GameHub</title>
+
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-inner">
+            <a href="#" class="logo">
+                Game<span>Hub</span>
+            </a>
+
+            <nav>
+                <a href="#games">Games</a>
+            </nav>
+        </div>
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+            <h1>Play Games</h1>
+
+            <p>
+                Free browser games, all in one place.
+            </p>
+
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Search games..."
+            >
+        </section>
+
+
+        <section id="games" class="games-section">
+
+            <div class="section-title">
+                <h2>Games</h2>
+
+                <span id="gameCount">
+                    3 games
+                </span>
+            </div>
+
+
+            <div id="gamesGrid" class="games-grid">
+                <p class="loading">
+                    Loading games...
+                </p>
+            </div>
+
+
+            <div id="noResults" class="no-results hidden">
+                <h3>No games found</h3>
+
+                <p>
+                    Try another search.
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer id="about">
+        <p>
+            GameHub © 2026
+        </p>
+    </footer>
+
+
+    <!-- Game player -->
+
+    <div id="gameModal" class="modal hidden">
+
+        <div
+            id="modalBackdrop"
+            class="modal-backdrop"
+        ></div>
+
+
+        <div class="game-window">
+
+            <div class="game-toolbar">
+
+                <h2 id="modalTitle">
+                    Game
+                </h2>
+
+
+                <div class="toolbar-buttons">
+
+                    <button
+                        id="fullscreenButton"
+                        title="Fullscreen"
+                    >
+                        ⛶
+                    </button>
+
+
+                    <button
+                        id="closeButton"
+                        title="Close"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="iframeContainer"
+                class="iframe-container"
+            >
+
+                <iframe
+                    id="gameFrame"
+                    title="Game"
+                    allowfullscreen
+                ></iframe>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="./app.js"></script>
+
+</body>
+</html>

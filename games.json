@@ -1,0 +1,26 @@
+[
+    {
+        "id": "2048",
+        "title": "2048",
+        "description": "Combine numbers and reach 2048.",
+        "category": "Puzzle",
+        "icon": "🔢",
+        "iframe": "2048.html"
+    },
+    {
+        "id": "Super Hexagon",
+        "title": "Super Hexagon",
+        "description": "You are a hexagon in the center. Rotate and move your arrow through the gaps in other hexagons that continuously close in around you. Survive as long as you can without hitting the walls.",
+        "category": "Dodging",
+        "icon": "⬢",
+        "iframe": "Super-Hexagon.html"
+    },
+    {
+        "id": "Minecraft Clone",
+        "title": "Minecraft Clone",
+        "description": "A Minecraft clone.",
+        "category": "Building",
+        "icon": "⛏️",
+        "iframe": "mncrftcln.html"
+    },
+]
