@@ -23,4 +23,13 @@
         "icon": "⛏️",
         "iframe": "mncrftcln.html"
     },
+
+    {
+        "id": "Snake Game",
+        "title": "Snake Game",
+        "description": "The clasic snake game",
+        "category": "Growing",
+        "icon": "🐍",
+        "iframe": "snake.html"
+    }
 ]
