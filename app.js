@@ -63,7 +63,16 @@ const games = [
         category: "Building",
         icon: "⛏️",
         iframe: "mncrftcln.html"
-    }
+    },
+
+    {
+        id: "Snake Game",
+        title: "Snake Game",
+        description: "The classic snake game",
+        category: "Growing",
+        icon: "🐍",
+        iframe: "snake.html"
+    },    
 
 ];
 
