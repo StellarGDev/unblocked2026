@@ -1,9 +1,9 @@
 Go to https://stellargdev.github.io/unblocked2026/ to use this
 
+If you are using this at school, stop
 
 
-
-Credits to:
+# Credits to:
 
 
 novice27b
@@ -19,3 +19,4 @@ for making Flappy bird
 ChatGPT made the base project
 
 I modified some things in the source code
+
