@@ -74,6 +74,14 @@ const games = [
         iframe: "snake.html"
     },    
 
+    {
+        id: "Flappy Bird",
+        title: "Flappy Bird",
+        description: "Clasic flappy bird.",
+        category: "Dodging",
+        icon: "🐦",
+        iframe: "Flappy-Bird.html"
+    },
 ];
 
 
