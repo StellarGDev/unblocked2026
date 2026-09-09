@@ -78,7 +78,7 @@ const games = [
         id: "Flappy Bird",
         title: "Flappy Bird",
         description: "Clasic flappy bird.",
-        category: "Dodging",
+        category: "Flying",
         icon: "🐦",
         iframe: "Flappy-Bird.html"
     },
