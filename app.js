@@ -82,6 +82,15 @@ const games = [
         icon: "🐦",
         iframe: "Flappy-Bird.html"
     },
+
+    {
+        id: "Neon Rush",
+        title: "Neon Rush",
+        description: "A game loosly based off of slope.",
+        category: "Endless Runner",
+        icon: "🔵",
+        iframe: "neon-rush.html"
+    },
 ];
 
 

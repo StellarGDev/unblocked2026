@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+
+<title>Neon Rush</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #050816;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    touch-action: none;
+}
+
+canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#ui {
+    position: fixed;
+    inset: 0;
+    color: white;
+    pointer-events: none;
+}
+
+#topbar {
+    position: absolute;
+    top: env(safe-area-inset-top, 12px);
+    left: 0;
+    width: 100%;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    text-shadow: 0 2px 8px #000;
+}
+
+.stat {
+    font-weight: 800;
+    font-size: clamp(15px, 3vw, 23px);
+}
+
+#pauseButton {
+    position: absolute;
+    right: 16px;
+    top: 58px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    padding: 0;
+    margin: 0;
+    color: white;
+    background: rgba(255,255,255,.14);
+    font-size: 18px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#centerMessage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92%, 520px);
+    text-align: center;
+    pointer-events: auto;
+}
+
+#centerMessage h1 {
+    margin: 0 0 10px;
+    font-size: clamp(42px, 11vw, 78px);
+    letter-spacing: 5px;
+    color: #57f6ff;
+    text-shadow:
+        0 0 10px #57f6ff,
+        0 0 30px #167dff,
+        0 0 60px #167dff;
+}
+
+#centerMessage p {
+    margin: 8px 0;
+    color: #d5ddff;
+    font-size: clamp(14px, 3.5vw, 19px);
+    line-height: 1.5;
+}
+
+#startButton {
+    display: inline-block;
+    border: 0;
+    padding: 15px 34px;
+    margin-top: 15px;
+    border-radius: 999px;
+    color: white;
+    background: linear-gradient(135deg,#087cff,#8a35ff);
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    box-shadow:
+        0 0 15px rgba(40,120,255,.5),
+        0 0 35px rgba(130,40,255,.25);
+}
+
+#startButton:active {
+    transform: scale(.95);
+}
+
+.hidden {
+    display: none !important;
+}
+
+#touchControls {
+    position: fixed;
+    left: 0;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    width: 100%;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.touchButton {
+    width: min(27vw, 110px);
+    height: min(27vw, 110px);
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.10);
+    backdrop-filter: blur(7px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 35px;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.touchButton:active {
+    background: rgba(80,200,255,.25);
+}
+
+@media (min-width: 900px) {
+    #touchControls {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+
+    <div id="topbar">
+        <div class="stat">
+            SCORE: <span id="score">0</span>
+        </div>
+
+        <div class="stat">
+            BEST: <span id="best">0</span>
+        </div>
+    </div>
+
+    <button id="pauseButton" type="button">Ⅱ</button>
+
+    <div id="centerMessage">
+
+        <h1>NEON RUSH</h1>
+
+        <p id="message">
+            Dodge the barriers. Grab the energy orbs.<br>
+            How far can you get?
+        </p>
+
+        <button id="startButton" type="button">
+            START RUN
+        </button>
+
+    </div>
+
+    <div id="touchControls">
+
+        <div class="touchButton" id="leftButton">
+            ◀
+        </div>
+
+        <div class="touchButton" id="rightButton">
+            ▶
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   NEON RUSH
+   ========================================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d", { alpha: false });
+
+const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
+const centerMessage = document.getElementById("centerMessage");
+const message = document.getElementById("message");
+const startButton = document.getElementById("startButton");
+const pauseButton = document.getElementById("pauseButton");
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+let DPR = 1;
+
+let running = false;
+let paused = false;
+
+let score = 0;
+let best = 0;
+
+let distance = 0;
+let speed = 7;
+let difficulty = 0;
+
+let road = [];
+let objects = [];
+let particles = [];
+
+let spawnTimer = 600;
+let coinTimer = 500;
+
+let inputLeft = false;
+let inputRight = false;
+
+let lastTime = 0;
+
+const player = {
+    x: 0,
+    y: 0,
+    vx: 0,
+    width: 32,
+    height: 32,
+    tilt: 0
+};
+
+const colors = {
+    road: "#101936",
+    road2: "#17244c",
+    cyan: "#55f7ff",
+    blue: "#2979ff",
+    purple: "#a83cff",
+    pink: "#ff38c7",
+    yellow: "#ffe45e"
+};
+
+/* =========================================================
+   RESIZE
+   ========================================================= */
+
+function resize() {
+
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    DPR = Math.min(
+        window.devicePixelRatio || 1,
+        2
+    );
+
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+
+    ctx.setTransform(
+        DPR,
+        0,
+        0,
+        DPR,
+        0,
+        0
+    );
+
+    if (!running) {
+        createRoad();
+        resetPlayer();
+    }
+}
+
+window.addEventListener(
+    "resize",
+    resize
+);
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function random(min, max) {
+    return Math.random() *
+        (max - min) + min;
+}
+
+function clamp(value, min, max) {
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+function distance2(a, b) {
+
+    const dx =
+        a.x - b.x;
+
+    const dy =
+        a.y - b.y;
+
+    return dx * dx + dy * dy;
+}
+
+function roundedRect(
+    x,
+    y,
+    w,
+    h,
+    r
+) {
+
+    r = Math.min(
+        r,
+        w / 2,
+        h / 2
+    );
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x + r,
+        y
+    );
+
+    ctx.arcTo(
+        x + w,
+        y,
+        x + w,
+        y + h,
+        r
+    );
+
+    ctx.arcTo(
+        x + w,
+        y + h,
+        x,
+        y + h,
+        r
+    );
+
+    ctx.arcTo(
+        x,
+        y + h,
+        x,
+        y,
+        r
+    );
+
+    ctx.arcTo(
+        x,
+        y,
+        x + w,
+        y,
+        r
+    );
+
+    ctx.closePath();
+}
+
+/* =========================================================
+   ROAD
+   ========================================================= */
+
+function createRoad() {
+
+    road = [];
+
+    let center =
+        W / 2;
+
+    const segments =
+        Math.ceil(H / 45) + 15;
+
+    for (
+        let i = 0;
+        i < segments;
+        i++
+    ) {
+
+        if (i > 0) {
+
+            center +=
+                random(-55, 55);
+
+            center =
+                clamp(
+                    center,
+                    W * .25,
+                    W * .75
+                );
+        }
+
+        road.push({
+            y: H - i * 45,
+            center: center,
+            width: Math.max(
+                150,
+                W * .42 - i * 1.2
+            )
+        });
+    }
+}
+
+function roadAt(y) {
+
+    if (!road.length) {
+        createRoad();
+    }
+
+    const index =
+        Math.floor(
+            (H - y) / 45
+        );
+
+    if (index < 0) {
+        return road[0];
+    }
+
+    if (
+        index >=
+        road.length - 1
+    ) {
+        return road[
+            road.length - 1
+        ];
+    }
+
+    const a =
+        road[index];
+
+    const b =
+        road[index + 1];
+
+    const t =
+        ((H - y) / 45) -
+        index;
+
+    return {
+        center:
+            a.center +
+            (b.center -
+             a.center) * t,
+
+        width:
+            a.width +
+            (b.width -
+             a.width) * t
+    };
+}
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+function resetPlayer() {
+
+    const r =
+        roadAt(H - 130);
+
+    player.x =
+        r.center;
+
+    player.y =
+        H - 130;
+
+    player.vx = 0;
+    player.tilt = 0;
+}
+
+function drawPlayer() {
+
+    ctx.save();
+
+    ctx.translate(
+        player.x,
+        player.y
+    );
+
+    ctx.rotate(
+        player.tilt
+    );
+
+    ctx.shadowColor =
+        colors.cyan;
+
+    ctx.shadowBlur = 25;
+
+    const gradient =
+        ctx.createLinearGradient(
+            -20,
+            -20,
+            20,
+            20
+        );
+
+    gradient.addColorStop(
+        0,
+        "#ffffff"
+    );
+
+    gradient.addColorStop(
+        .35,
+        colors.cyan
+    );
+
+    gradient.addColorStop(
+        1,
+        colors.blue
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    roundedRect(
+        -16,
+        -16,
+        32,
+        32,
+        9
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    roundedRect(
+        -7,
+        -6,
+        14,
+        8,
+        4
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+/* =========================================================
+   OBJECTS
+   ========================================================= */
+
+function spawnObstacle() {
+
+    const y = -80;
+    const r = roadAt(y);
+
+    const x =
+        r.center +
+        random(
+            -r.width / 2 + 25,
+            r.width / 2 - 25
+        );
+
+    objects.push({
+        type: "obstacle",
+        x: x,
+        y: y,
+        size: random(24, 38),
+        rotation: random(
+            0,
+            Math.PI
+        ),
+        rotSpeed: random(
+            -.04,
+            .04
+        )
+    });
+}
+
+function spawnCoin() {
+
+    const y = -50;
+    const r = roadAt(y);
+
+    const x =
+        r.center +
+        random(
+            -r.width / 2 + 20,
+            r.width / 2 - 20
+        );
+
+    objects.push({
+        type: "coin",
+        x: x,
+        y: y,
+        size: 10,
+        phase: random(
+            0,
+            Math.PI * 2
+        )
+    });
+}
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+function makeParticles(
+    x,
+    y,
+    color,
+    amount
+) {
+
+    for (
+        let i = 0;
+        i < amount;
+        i++
+    ) {
+
+        particles.push({
+            x: x,
+            y: y,
+            vx: random(-3, 3),
+            vy: random(-3, 3),
+            life: random(20, 45),
+            maxLife: 45,
+            color: color
+        });
+    }
+}
+
+function updateParticles() {
+
+    for (
+        let i = particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const p =
+            particles[i];
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.vy += .04;
+
+        p.life--;
+
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticles() {
+
+    for (const p of particles) {
+
+        ctx.globalAlpha =
+            p.life /
+            p.maxLife;
+
+        ctx.fillStyle =
+            p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            3,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+function drawBackground(time) {
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+        );
+
+    gradient.addColorStop(
+        0,
+        "#050817"
+    );
+
+    gradient.addColorStop(
+        .55,
+        "#090d27"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#11194a"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    ctx.globalAlpha = .5;
+
+    for (
+        let i = 0;
+        i < 50;
+        i++
+    ) {
+
+        const x =
+            (i * 97) % W;
+
+        const y =
+            (
+                i * 53 +
+                time * .015 *
+                (i % 3 + 1)
+            ) % H;
+
+        ctx.fillStyle =
+            i % 2
+                ? colors.cyan
+                : colors.purple;
+
+        ctx.fillRect(
+            x,
+            y,
+            2,
+            2
+        );
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================================================
+   ROAD DRAWING
+   ========================================================= */
+
+function drawRoad() {
+
+    for (
+        let i = 0;
+        i < road.length - 1;
+        i++
+    ) {
+
+        const a = road[i];
+        const b = road[i + 1];
+
+        const ax1 =
+            a.center -
+            a.width / 2;
+
+        const ax2 =
+            a.center +
+            a.width / 2;
+
+        const bx1 =
+            b.center -
+            b.width / 2;
+
+        const bx2 =
+            b.center +
+            b.width / 2;
+
+        ctx.fillStyle =
+            i % 2
+                ? colors.road
+                : colors.road2;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            ax1,
+            a.y
+        );
+
+        ctx.lineTo(
+            ax2,
+            a.y
+        );
+
+        ctx.lineTo(
+            bx2,
+            b.y
+        );
+
+        ctx.lineTo(
+            bx1,
+            b.y
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(55,235,255,.7)";
+
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            ax1,
+            a.y
+        );
+
+        ctx.lineTo(
+            bx1,
+            b.y
+        );
+
+        ctx.stroke();
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            ax2,
+            a.y
+        );
+
+        ctx.lineTo(
+            bx2,
+            b.y
+        );
+
+        ctx.stroke();
+    }
+}
+
+/* =========================================================
+   OBSTACLE
+   ========================================================= */
+
+function drawObstacle(o) {
+
+    ctx.save();
+
+    ctx.translate(
+        o.x,
+        o.y
+    );
+
+    ctx.rotate(
+        o.rotation
+    );
+
+    ctx.shadowColor =
+        colors.pink;
+
+    ctx.shadowBlur = 18;
+
+    const gradient =
+        ctx.createLinearGradient(
+            -o.size,
+            -o.size,
+            o.size,
+            o.size
+        );
+
+    gradient.addColorStop(
+        0,
+        "#ff7df0"
+    );
+
+    gradient.addColorStop(
+        .5,
+        colors.pink
+    );
+
+    gradient.addColorStop(
+        1,
+        "#7a18ff"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    roundedRect(
+        -o.size / 2,
+        -o.size / 2,
+        o.size,
+        o.size,
+        6
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle =
+        "#ffffff";
+
+    ctx.globalAlpha = .5;
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+/* =========================================================
+   COIN
+   ========================================================= */
+
+function drawCoin(o) {
+
+    const pulse =
+        Math.sin(
+            performance.now() * .006 +
+            o.phase
+        ) * 2;
+
+    ctx.save();
+
+    ctx.translate(
+        o.x,
+        o.y
+    );
+
+    ctx.shadowColor =
+        colors.yellow;
+
+    ctx.shadowBlur = 18;
+
+    ctx.fillStyle =
+        colors.yellow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        o.size + pulse,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle =
+        "#fff9ae";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -2,
+        -2,
+        o.size * .4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+
+function update(dt) {
+
+    if (!running || paused) {
+        return;
+    }
+
+    difficulty +=
+        dt * .000008;
+
+    speed +=
+        dt * .00025;
+
+    speed =
+        Math.min(
+            speed,
+            17
+        );
+
+    distance +=
+        speed *
+        dt *
+        .04;
+
+    score =
+        Math.floor(distance);
+
+    scoreEl.textContent =
+        score;
+
+    /* Controls */
+
+    if (inputLeft) {
+        player.vx -= .85;
+    }
+
+    if (inputRight) {
+        player.vx += .85;
+    }
+
+    if (
+        !inputLeft &&
+        !inputRight
+    ) {
+        player.vx *= .88;
+    }
+
+    player.vx =
+        clamp(
+            player.vx,
+            -8,
+            8
+        );
+
+    player.x +=
+        player.vx *
+        (dt / 16.67);
+
+    player.tilt =
+        player.vx * .055;
+
+    /* Road boundaries */
+
+    const r =
+        roadAt(player.y);
+
+    const leftEdge =
+        r.center -
+        r.width / 2 +
+        18;
+
+    const rightEdge =
+        r.center +
+        r.width / 2 -
+        18;
+
+    if (
+        player.x <
+        leftEdge
+    ) {
+
+        player.x =
+            leftEdge;
+
+        player.vx *= -.25;
+    }
+
+    if (
+        player.x >
+        rightEdge
+    ) {
+
+        player.x =
+            rightEdge;
+
+        player.vx *= -.25;
+    }
+
+    /* Move road */
+
+    for (const segment of road) {
+
+        segment.y +=
+            speed *
+            dt *
+            .035;
+    }
+
+    while (
+        road[road.length - 1].y >
+        -100
+    ) {
+
+        const last =
+            road[road.length - 1];
+
+        let center =
+            last.center +
+            random(-55, 55);
+
+        center =
+            clamp(
+                center,
+                W * .25,
+                W * .75
+            );
+
+        road.push({
+            y: last.y - 45,
+            center: center,
+            width: Math.max(
+                150,
+                W * .42 -
+                road.length * 1.2
+            )
+        });
+    }
+
+    while (
+        road[0].y >
+        H + 100
+    ) {
+        road.shift();
+    }
+
+    /* Obstacles */
+
+    spawnTimer -= dt;
+
+    const spawnRate =
+        Math.max(
+            300,
+            850 -
+            difficulty * 220
+        );
+
+    if (
+        spawnTimer <= 0
+    ) {
+
+        spawnObstacle();
+
+        spawnTimer =
+            spawnRate;
+
+        if (
+            Math.random() <
+            .22
+        ) {
+            spawnObstacle();
+        }
+    }
+
+    /* Coins */
+
+    coinTimer -= dt;
+
+    if (
+        coinTimer <= 0
+    ) {
+
+        spawnCoin();
+
+        coinTimer =
+            random(
+                500,
+                900
+            );
+    }
+
+    /* Objects */
+
+    for (
+        let i = objects.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const o =
+            objects[i];
+
+        o.y +=
+            speed *
+            dt *
+            .035;
+
+        if (
+            o.type ===
+            "obstacle"
+        ) {
+            o.rotation +=
+                o.rotSpeed;
+        }
+
+        const hitDistance =
+            o.type === "coin"
+                ? 27
+                : 28 +
+                  o.size * .2;
+
+        if (
+            distance2(
+                player,
+                o
+            ) <
+            hitDistance *
+            hitDistance
+        ) {
+
+            if (
+                o.type ===
+                "coin"
+            ) {
+
+                score += 25;
+                distance += 25;
+
+                scoreEl.textContent =
+                    score;
+
+                makeParticles(
+                    o.x,
+                    o.y,
+                    colors.yellow,
+                    18
+                );
+
+                objects.splice(
+                    i,
+                    1
+                );
+
+                continue;
+            }
+
+            endGame();
+
+            return;
+        }
+
+        if (
+            o.y >
+            H + 100
+        ) {
+
+            objects.splice(
+                i,
+                1
+            );
+        }
+    }
+
+    updateParticles();
+}
+
+/* =========================================================
+   DRAW
+   ========================================================= */
+
+function draw(time) {
+
+    drawBackground(time);
+
+    drawRoad();
+
+    for (const o of objects) {
+
+        if (
+            o.type ===
+            "obstacle"
+        ) {
+            drawObstacle(o);
+        } else {
+            drawCoin(o);
+        }
+    }
+
+    drawParticles();
+
+    drawPlayer();
+
+    if (
+        paused &&
+        running
+    ) {
+
+        ctx.fillStyle =
+            "rgba(0,0,0,.4)";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle =
+            "#ffffff";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "800 42px Arial";
+
+        ctx.fillText(
+            "PAUSED",
+            W / 2,
+            H / 2
+        );
+    }
+}
+
+/* =========================================================
+   GAME LOOP
+   ========================================================= */
+
+function gameLoop(time) {
+
+    if (!lastTime) {
+        lastTime = time;
+    }
+
+    const dt =
+        Math.min(
+            40,
+            time - lastTime
+        );
+
+    lastTime = time;
+
+    update(dt);
+    draw(time);
+
+    requestAnimationFrame(
+        gameLoop
+    );
+}
+
+/* =========================================================
+   START GAME
+   ========================================================= */
+
+function startGame(e) {
+
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    running = true;
+    paused = false;
+
+    score = 0;
+    distance = 0;
+    speed = 7;
+    difficulty = 0;
+
+    spawnTimer = 600;
+    coinTimer = 400;
+
+    objects = [];
+    particles = [];
+
+    /*
+       BEST is intentionally NOT saved.
+       It only lasts until the page is refreshed.
+    */
+
+    best = 0;
+
+    scoreEl.textContent = "0";
+    bestEl.textContent = "0";
+
+    createRoad();
+    resetPlayer();
+
+    centerMessage.classList.add(
+        "hidden"
+    );
+
+    pauseButton.textContent =
+        "Ⅱ";
+}
+
+/*
+   Use both click and pointerup.
+   This makes the button reliable on:
+   - Chrome
+   - Chromebook
+   - Windows
+   - Mac
+   - iPad
+   - iPhone
+*/
+
+startButton.addEventListener(
+    "click",
+    startGame
+);
+
+startButton.addEventListener(
+    "pointerup",
+    function(e) {
+
+        if (
+            e.pointerType ===
+            "touch"
+        ) {
+            startGame(e);
+        }
+    }
+);
+
+/* =========================================================
+   GAME OVER
+   ========================================================= */
+
+function endGame() {
+
+    running = false;
+
+    makeParticles(
+        player.x,
+        player.y,
+        colors.cyan,
+        35
+    );
+
+    if (score > best) {
+
+        best = score;
+
+        bestEl.textContent =
+            best;
+    }
+
+    centerMessage.classList.remove(
+        "hidden"
+    );
+
+    message.innerHTML =
+        "Run over! You scored <b>" +
+        score +
+        "</b>.<br>" +
+        "Best score: <b>" +
+        best +
+        "</b>";
+
+    startButton.textContent =
+        "PLAY AGAIN";
+}
+
+/* =========================================================
+   PAUSE
+   ========================================================= */
+
+function togglePause(e) {
+
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    if (!running) {
+        return;
+    }
+
+    paused = !paused;
+
+    pauseButton.textContent =
+        paused
+            ? "▶"
+            : "Ⅱ";
+}
+
+pauseButton.addEventListener(
+    "click",
+    togglePause
+);
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+window.addEventListener(
+    "keydown",
+    function(e) {
+
+        const key =
+            e.key.toLowerCase();
+
+        if (
+            key === "arrowleft" ||
+            key === "a"
+        ) {
+
+            inputLeft = true;
+
+            e.preventDefault();
+        }
+
+        if (
+            key === "arrowright" ||
+            key === "d"
+        ) {
+
+            inputRight = true;
+
+            e.preventDefault();
+        }
+
+        if (
+            key === " " ||
+            key === "escape"
+        ) {
+
+            togglePause(e);
+        }
+
+        if (
+            key === "enter" &&
+            !running
+        ) {
+
+            startGame(e);
+        }
+    }
+);
+
+window.addEventListener(
+    "keyup",
+    function(e) {
+
+        const key =
+            e.key.toLowerCase();
+
+        if (
+            key === "arrowleft" ||
+            key === "a"
+        ) {
+            inputLeft = false;
+        }
+
+        if (
+            key === "arrowright" ||
+            key === "d"
+        ) {
+            inputRight = false;
+        }
+    }
+);
+
+/* =========================================================
+   MOBILE BUTTONS
+   ========================================================= */
+
+function setupTouchButton(
+    element,
+    direction
+) {
+
+    function press(e) {
+
+        e.preventDefault();
+
+        if (
+            direction ===
+            "left"
+        ) {
+            inputLeft = true;
+        } else {
+            inputRight = true;
+        }
+    }
+
+    function release(e) {
+
+        e.preventDefault();
+
+        if (
+            direction ===
+            "left"
+        ) {
+            inputLeft = false;
+        } else {
+            inputRight = false;
+        }
+    }
+
+    element.addEventListener(
+        "pointerdown",
+        press
+    );
+
+    element.addEventListener(
+        "pointerup",
+        release
+    );
+
+    element.addEventListener(
+        "pointercancel",
+        release
+    );
+
+    element.addEventListener(
+        "pointerleave",
+        release
+    );
+}
+
+setupTouchButton(
+    document.getElementById(
+        "leftButton"
+    ),
+    "left"
+);
+
+setupTouchButton(
+    document.getElementById(
+        "rightButton"
+    ),
+    "right"
+);
+
+/* =========================================================
+   SWIPING
+   ========================================================= */
+
+let touchStartX = 0;
+
+window.addEventListener(
+    "touchstart",
+    function(e) {
+
+        if (
+            e.touches.length
+        ) {
+            touchStartX =
+                e.touches[0]
+                .clientX;
+        }
+    },
+    { passive: true }
+);
+
+window.addEventListener(
+    "touchmove",
+    function(e) {
+
+        if (!running) {
+            return;
+        }
+
+        if (
+            !e.touches.length
+        ) {
+            return;
+        }
+
+        const x =
+            e.touches[0]
+            .clientX;
+
+        const dx =
+            x - touchStartX;
+
+        if (
+            Math.abs(dx) > 8
+        ) {
+
+            if (dx < 0) {
+
+                inputLeft = true;
+                inputRight = false;
+
+            } else {
+
+                inputRight = true;
+                inputLeft = false;
+            }
+        }
+    },
+    { passive: true }
+);
+
+window.addEventListener(
+    "touchend",
+    function() {
+
+        inputLeft = false;
+        inputRight = false;
+    }
+);
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+resize();
+createRoad();
+resetPlayer();
+
+scoreEl.textContent = "0";
+bestEl.textContent = "0";
+
+requestAnimationFrame(
+    gameLoop
+);
+
+</script>
+
+</body>
+</html>
