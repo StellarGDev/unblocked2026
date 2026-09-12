@@ -91,6 +91,15 @@ const games = [
         icon: "🔵",
         iframe: "neon-rush.html"
     },
+
+    {
+        id: "Eaglercraft",
+        title: "Eaglercraft 1.12.2",
+        description: "Minecraft 1.12.2, but in a web browser",
+        category: "Sandbox",
+        icon: "⛏️",
+        iframe: "https://stellargdev.github.io/eaglerunblocked/"
+    },
 ];
 
 
