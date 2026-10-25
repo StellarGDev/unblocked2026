@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sky Obby</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0;height:100%;overflow:hidden;background:#8ed1ff;font-family:system-ui,-apple-system,sans-serif;color:#fff}
+canvas{display:block;position:fixed;inset:0}
+.hud{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px 14px;font-weight:700;text-shadow:0 1px 3px #0009;pointer-events:none;z-index:2}
+.hud button{pointer-events:auto}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 16px;background:#ffcf33;color:#2a2200;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,15,30,.55);z-index:5}
+#card{background:rgba(20,26,46,.94);border-radius:18px;padding:26px 30px;text-align:center;max-width:380px;box-shadow:0 10px 40px #0008}
+#card h1{margin:0 0 6px;font-size:28px}#card p{margin:6px 0 16px;color:#cfd6ee;line-height:1.4}
+#card .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#hint{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:13px;text-shadow:0 1px 3px #000a;z-index:2;pointer-events:none}
+</style></head><body>
+<div class="hud"><div id="lv"></div><div id="st"></div><button id="menu">☰ Levels</button></div>
+<div id="hint">WASD / arrows to move · Space to jump · drag mouse or Q/E to turn camera · R to restart level</div>
+<div id="ov"><div id="card"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const LV=[
+ {n:"Warm-Up",c:10,gap:[2,2.8],sz:[4,5],lat:0,rise:[0,.3],mv:0},
+ {n:"Zig-Zag",c:12,gap:[2.4,3.2],sz:[3.2,4],lat:3.5,rise:[0,.5],mv:0},
+ {n:"Stairway",c:13,gap:[2.4,3.2],sz:[3,3.8],lat:2,rise:[.5,1],mv:.2},
+ {n:"Tiny Tiles",c:14,gap:[2.8,3.6],sz:[2.2,2.8],lat:2.5,rise:[-.3,.6],mv:.2},
+ {n:"The Gauntlet",c:16,gap:[3,3.8],sz:[2.4,3],lat:3,rise:[0,.9],mv:.4}
+];
+const R=.35,H=1.8,G=30,JV=11,SP=8;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed1ff);scene.fog=new THREE.Fog(0x8ed1ff,40,130);
+const cam=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
+const rend=new THREE.WebGLRenderer({antialias:true});rend.setSize(innerWidth,innerHeight);rend.setPixelRatio(Math.min(devicePixelRatio,2));document.body.appendChild(rend.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6688aa,.85));
+const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(30,60,20);scene.add(sun);
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rend.setSize(innerWidth,innerHeight)});
+
+// character
+const me=new THREE.Group(),box=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));m.position.set(x,y,z);me.add(m);return m};
+box(.8,.8,.4,0x2f7bff,0,1,0);box(.5,.5,.5,0xffd84a,0,1.65,0);
+const legL=box(.35,.6,.35,0x3ccf6a,-.2,.3,0),legR=box(.35,.6,.35,0x3ccf6a,.2,.3,0);
+box(.25,.7,.25,0xffd84a,-.55,1,0);box(.25,.7,.25,0xffd84a,.55,1,0);scene.add(me);
+
+let grp=null,plats=[],lava=null,cur=0,P={x:0,y:0,z:0},vx=0,vy=0,vz=0,cp=null,spawn={x:0,y:0,z:0},coy=0,jb=0,riding=null,deaths=0,t0=0,tm=0,state='menu',yaw=0,pitch=.45,killY=-20,face=0;
+const k={};
+function mul(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pal=[0xff6b6b,0xffa94d,0xffd43b,0x69db7c,0x4dabf7,0xb197fc,0xf783ac,0x38d9a9];
+
+function addP(x,y,z,w,d,col,o={}){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),new THREE.MeshLambertMaterial({color:col}));
+ m.position.set(x,y-.5,z);grp.add(m);
+ const p={m,y,w,d,ox:x,dx:0,...o};plats.push(p);return p;
+}
+function build(i){
+ if(grp)scene.remove(grp);grp=new THREE.Group();scene.add(grp);plats=[];
+ cur=i;const L=LV[i],r=mul(i*97+13),rg=(a,b)=>a+(b-a)*r();
+ let p=addP(0,0,0,6,6,0x69db7c,{cp:1});cp=p;let minY=0;
+ for(let n=1;n<=L.c;n++){
+  const w=rg(...L.sz),d=rg(...L.sz),g=rg(...L.gap);
+  const z=p.m.position.z-p.d/2-g-d/2;
+  let x=Math.max(-7,Math.min(7,p.m.position.x+rg(-L.lat,L.lat)));
+  let y=Math.max(-3,p.y+rg(...L.rise));
+  const mv=r()<L.mv&&n>2&&n<L.c;
+  const o={};if(mv){o.amp=2.2;o.sp=1+r()*.6;o.ph=r()*6;}
+  if(n%5===0&&n<L.c){o.cp=1;p=addP(x,y,z,Math.max(w,3.5),Math.max(d,3.5),0x69db7c,o);}
+  else p=addP(x,y,z,w,d,pal[(n+i)%pal.length],o);
+  minY=Math.min(minY,y);
+ }
+ const f=p,z=f.m.position.z-f.d/2-3.2-3;
+ addP(f.m.position.x,f.y+.3,z,6,6,0xffd700,{fin:1});
+ killY=minY-14;
+ lava=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshBasicMaterial({color:0xff4a1c}));
+ lava.rotation.x=-Math.PI/2;lava.position.y=killY+6;grp.add(lava);
+ deaths=0;respawn(true);t0=performance.now();state='play';
+}
+function respawn(first){
+ const s=cp;P={x:s.m.position.x,y:s.y,z:s.m.position.z};vx=vy=vz=0;yaw=0;riding=null;
+ if(!first)deaths++;
+}
+const hit=(x,y,z)=>plats.some(p=>Math.abs(x-p.m.position.x)<p.w/2+R&&Math.abs(z-p.m.position.z)<p.d/2+R&&y<p.y-.15&&y+H>p.y-1);
+function win(){
+ state='won';const s=((performance.now()-t0)/1000).toFixed(1);
+ const last=cur===LV.length-1;
+ show(last?"You beat the obby! 🏆":"Level complete! 🎉",`${LV[cur].n} · ${s}s · ${deaths} fall${deaths===1?'':'s'}`,
+  [...(last?[]:[["Next level ▶",()=>build(cur+1)]]),["Replay",()=>build(cur)],["Levels",menu]]);
+}
+function show(t,s,b){
+ const c=document.getElementById('card');c.innerHTML=`<h1>${t}</h1><p>${s}</p><div class="row"></div>`;
+ b.forEach(([l,f])=>{const e=document.createElement('button');e.textContent=l;e.onclick=()=>{ov.style.display='none';f()};c.lastChild.appendChild(e)});
+ ov.style.display='flex';
+}
+const ov=document.getElementById('ov');
+function menu(){
+ state='menu';show("Sky Obby","Hop across the platforms to the golden pad. Don’t touch the lava! Checkpoints are green.",LV.map((l,i)=>[`${i+1}. ${l.n}`,()=>build(i)]));
+ ov.style.display='flex';
+}
+document.getElementById('menu').onclick=menu;
+addEventListener('keydown',e=>{const c=e.key.toLowerCase();k[c]=1;if(c===' '){jb=.12;e.preventDefault()}if(c==='r'&&state==='play')build(cur)});
+addEventListener('keyup',e=>k[e.key.toLowerCase()]=0);
+let drag=null;
+rend.domElement.addEventListener('pointerdown',e=>drag=e);
+addEventListener('pointerup',()=>drag=null);
+addEventListener('pointermove',e=>{if(drag){yaw-=(e.clientX-drag.clientX)*.006;pitch=Math.max(.1,Math.min(1.2,pitch+(e.clientY-drag.clientY)*.004));drag=e}});
+
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.05);last=now;const T=now/1000;
+ for(const p of plats)if(p.amp){const nx=p.ox+Math.sin(T*p.sp+p.ph)*p.amp;p.dx=nx-p.m.position.x;p.m.position.x=nx}
+ if(state==='play'){
+  if(k.q||k.arrowleft)yaw+=dt*2;if(k.e||k.arrowright)yaw-=dt*2;
+  const sy=Math.sin(yaw),cy=Math.cos(yaw);
+  const f=(k.w||k.arrowup?1:0)-(k.s||k.arrowdown?1:0),rt=(k.d?1:0)-(k.a?1:0);
+  let tx=-sy*f+cy*rt,tz=-cy*f-sy*rt;const l=Math.hypot(tx,tz);if(l>0){tx/=l;tz/=l;face=Math.atan2(tx,tz)}
+  const a=Math.min(1,dt*(coy>0?14:5));vx+=(tx*SP-vx)*a;vz+=(tz*SP-vz)*a;
+  if(riding){P.x+=riding.dx}
+  const nx=P.x+vx*dt,nz=P.z+vz*dt;if(!hit(nx,P.y,P.z))P.x=nx;else vx=0;if(!hit(P.x,P.y,nz))P.z=nz;else vz=0;
+  vy-=G*dt;let ny=P.y+vy*dt,gr=false;
+  for(const p of plats){
+   if(Math.abs(P.x-p.m.position.x)<p.w/2+R&&Math.abs(P.z-p.m.position.z)<p.d/2+R){
+    if(vy<=0&&P.y>=p.y-.1&&ny<=p.y){ny=p.y;vy=0;gr=true;riding=p;
+     if(p.cp&&cp!==p)cp=p;if(p.fin){P.y=ny;win();break}}
+    else if(vy>0&&P.y+H<=p.y-.9&&ny+H>p.y-1){ny=p.y-1-H;vy=0}
+   }
+  }
+  P.y=ny;if(!gr)riding=null;
+  coy=gr?.12:coy-dt;jb-=dt;
+  if(jb>0&&coy>0){vy=JV;jb=0;coy=0;riding=null}
+  if(P.y<killY+4)respawn();
+  tm=(now-t0)/1000;
+  document.getElementById('lv').textContent=`Level ${cur+1}/${LV.length} · ${LV[cur].n}`;
+  document.getElementById('st').textContent=`⏱ ${tm.toFixed(1)}s   💀 ${deaths}`;
+ }
+ me.position.set(P.x,P.y,P.z);
+ let dr=face-me.rotation.y;dr=Math.atan2(Math.sin(dr),Math.cos(dr));me.rotation.y+=dr*Math.min(1,dt*14);
+ const sw=Math.hypot(vx,vz)>1&&riding?Math.sin(T*14)*.7:0;legL.rotation.x=sw;legR.rotation.x=-sw;
+ const d=11,cx=P.x+Math.sin(yaw)*Math.cos(pitch)*d,cz=P.z+Math.cos(yaw)*Math.cos(pitch)*d,cyy=P.y+1+Math.sin(pitch)*d;
+ cam.position.lerp(new THREE.Vector3(cx,cyy,cz),Math.min(1,dt*10));cam.lookAt(P.x,P.y+1.2,P.z);
+ rend.render(scene,cam);
+}
+build(0);state='menu';menu();requestAnimationFrame(loop);
+</script></body></html>
