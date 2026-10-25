@@ -100,6 +100,33 @@ const games = [
         icon: "⛏️",
         iframe: "https://stellargdev.github.io/eaglerunblocked/"
     },
+
+    {
+        id: "Sega Virtua Racing",
+        title: "Sega Virtua Racing",
+        description: "Sega Virtua Racing, in scratch",
+        category: "Racing",
+        icon: "🏎",
+        iframe: "SegaVR.html"
+    },
+
+    {
+        id: "Sky Obby",
+        title: "Sky Obby",
+        description: "an obby game",
+        category": "obby",
+        icon: "■",
+        iframe: "Sky Obby.html"
+    },
+    
+    {
+        id: "Cuboria",
+        title: "Cuboria",
+        description: "an open voxel sandbox game",
+        category: "Sandbox",
+        icon: "⛏️",
+        iframe: "Cuboria.html"
+    },
 ];
 
 
