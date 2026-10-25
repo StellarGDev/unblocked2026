@@ -19,7 +19,7 @@
         "id": "Minecraft Clone",
         "title": "Minecraft Clone",
         "description": "A Minecraft clone.",
-        "category": "Building",
+        "category": "Sandbox",
         "icon": "⛏️",
         "iframe": "mncrftcln.html"
     },
@@ -27,7 +27,7 @@
         "id": "Snake Game",
         "title": "Snake Game",
         "description": "The clasic snake game",
-        "category": "Growing",
+        "category": "Puzzle",
         "icon": "🐍",
         "iframe": "snake.html"
     },
@@ -56,5 +56,32 @@
         "category": "Sandbox",
         "icon": "⛏️",
         "iframe": "https://stellargdev.github.io/eaglerunblocked/"
+    },
+
+    {
+        "id": "Cuboria",
+        "title": "Cuboria",
+        "description": "an open voxel sandbox game",
+        "category": "Sandbox",
+        "icon": "⛏️",
+        "iframe": "Cuboria.html"
+    },
+
+    {
+        "id": "Sega Virtua Racing",
+        "title": "Sega Virtua Racing",
+        "description": "Sega Virtua Racing, in scratch",
+        "category": "Racing",
+        "icon": "🏎",
+        "iframe": "SegaVR.html"
+    },
+
+    {
+        "id": "Sky Obby",
+        "title": "Sky Obby",
+        "description": "an obby game",
+        "category": "obby",
+        "icon": "■",
+        "iframe": "Sky Obby.html"
     }
 ]
