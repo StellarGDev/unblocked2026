@@ -114,7 +114,7 @@ const games = [
         id: "Sky Obby",
         title: "Sky Obby",
         description: "an obby game",
-        category": "obby",
+        category: "obby",
         icon: "■",
         iframe: "Sky Obby.html"
     },
