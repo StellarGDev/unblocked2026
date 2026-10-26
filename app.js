@@ -110,14 +110,6 @@ const games = [
         iframe: "SegaVR.html"
     },
 
-    {
-        id: "Sky Obby",
-        title: "Sky Obby",
-        description: "an obby game",
-        category: "obby",
-        icon: "■",
-        iframe: "Sky Obby.html"
-    },
     
     {
         id: "Cuboria",
@@ -126,7 +118,16 @@ const games = [
         category: "Sandbox",
         icon: "⛏️",
         iframe: "Cuboria.html"
-    }
+    },
+
+    {
+        id: "Sky Obby",
+        title: "Sky Obby",
+        description: "an obby game",
+        category: "obby",
+        icon: "■",
+        iframe: "Sky Obby.html"
+    },
 ];
 
 
