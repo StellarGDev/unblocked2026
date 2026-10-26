@@ -126,7 +126,7 @@ const games = [
         category: "Sandbox",
         icon: "⛏️",
         iframe: "Cuboria.html"
-    },
+    }
 ];
 
 
