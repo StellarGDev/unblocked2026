@@ -105,7 +105,7 @@ const games = [
         id: "Sega Virtua Racing",
         title: "Sega Virtua Racing",
         description: "Sega Virtua Racing, in scratch",
-        category: "Racing",
+        category: "driving",
         icon: "🏎",
         iframe: "SegaVR.html"
     },
@@ -127,6 +127,15 @@ const games = [
         category: "obby",
         icon: "■",
         iframe: "Sky Obby.html"
+    },
+
+    {
+        id: "tanuki sunset",
+        title: "Tanuki Sunset",
+        description: "ride around on a skateboard as a raccon and earn tanuki bits on the road",
+        category: "driving",
+        icon: "🌅",
+        iframe: "https://stepnseat.com/storage-online-games/tanuki-sunset/index.html"
     },
 ];
 
