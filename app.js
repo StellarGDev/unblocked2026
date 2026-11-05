@@ -137,6 +137,15 @@ const games = [
         icon: "🌅",
         iframe: "https://stepnseat.com/storage-online-games/tanuki-sunset/index.html"
     },
+
+        {
+        id: "slope",
+        title: "Slope",
+        description: "THE original slope",
+        category: "Endless Runner",
+        icon: "🟢",
+        iframe: "https://stepnseat.com/storage-online-games/slope/index.html"
+    },
 ];
 
 
