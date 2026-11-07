@@ -162,7 +162,7 @@ const games = [
         description: "a 2d rpg game",
         category: "RPG",
         icon: "🗡️",
-        iframe: "https://hero-wars.com"
+        iframe: "https://www.hero-wars.com/"
     },
 
     {
