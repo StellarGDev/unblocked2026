@@ -146,6 +146,51 @@ const games = [
         icon: "🟢",
         iframe: "https://stepnseat.com/storage-online-games/slope/index.html"
     },
+
+        {
+        id: "slope2",
+        title: "Slope 2",
+        description: "slope 2",
+        category: "Endless Runner",
+        icon: "🟡",
+        iframe: "https://stepnseat.com/storage-online-games/slope-2/index.html"
+    },
+
+    {
+        id: "Herowars",
+        title: "Hero Wars",
+        description: "a 2d rpg game",
+        category: "RPG",
+        icon: "🗡️",
+        iframe: "https://hero-wars.com"
+    },
+
+    {
+        id: "Miniblox",
+        title: "Miniblox.io",
+        description: "a voxel game",
+        category: "Sandbox",
+        icon: "⛏️",
+        iframe: "https://miniblox.io"
+    },
+
+    {
+        id: "bloxdio",
+        title: "bloxd.io",
+        description: "a web browser minecraft clone",
+        category: "Sandbox",
+        icon: "⛏️",
+        iframe: "https://doodlecube.io"
+    },
+   
+    {
+        id: "tnlrush",
+        title: "Tunnel rush",
+        description: "a fast-pased 3d geometric dodging game",
+        category: "Dodging",
+        icon: "⬣",
+        iframe: " https://stepnseat.com/storage-online-games/tunnel-rush/index.html"
+    },
 ];
 
 
