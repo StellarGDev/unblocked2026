@@ -69,7 +69,7 @@ const games = [
         id: "Snake Game",
         title: "Snake Game",
         description: "The classic snake game",
-        category: "Growing",
+        category: "Merging",
         icon: "🐍",
         iframe: "snake.html"
     },    
@@ -157,12 +157,12 @@ const games = [
     },
 
     {
-        id: "Herowars",
-        title: "Hero Wars",
-        description: "a 2d rpg game",
-        category: "RPG",
-        icon: "🗡️",
-        iframe: "https://www.hero-wars.com/"
+        id: "slitherio",
+        title: "Slither.io",
+        description: "a multi-player snake game",
+        category: "Growing",
+        icon: "🐍",
+        iframe: "http://slither.com/io"
     },
 
     {
@@ -184,11 +184,11 @@ const games = [
     },
    
     {
-        id: "tnlrush",
-        title: "Tunnel rush",
-        description: "a fast-pased 3d geometric dodging game",
-        category: "Dodging",
-        icon: "⬣",
+        id: "infntcrft",
+        title: "Infinite Craft",
+        description: "a merging game ment to merge things no-one has ever thought about",
+        category: "Merging",
+        icon: "♾️",
         iframe: " https://stepnseat.com/storage-online-games/tunnel-rush/index.html"
     },
 ];
