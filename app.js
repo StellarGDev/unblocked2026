@@ -189,7 +189,7 @@ const games = [
         description: "a merging game ment to merge things no-one has ever thought about",
         category: "Merging",
         icon: "♾️",
-        iframe: " https://stepnseat.com/storage-online-games/tunnel-rush/index.html"
+        iframe: "https://open-craft.vercel.app/"
     },
 ];
 
